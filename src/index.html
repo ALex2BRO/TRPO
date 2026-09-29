@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Магазин и БД</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 30px; background: #f4f4f9; }
+        .box { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        input { display: block; margin: 10px 0; padding: 8px; width: 250px; }
+        button { padding: 8px 15px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        .product-card { border: 1px solid #ddd; padding: 10px; margin: 5px 0; background: #fafafa; }
+    </style>
+</head>
+<body>
+
+    <h1>Интеграция HTML и Sequelize (SQLite)</h1>
+
+    <!-- Форма отправки данных в БД -->
+    <div class="box">
+        <h3>Регистрация пользователя (Запись в БД)</h3>
+        <form action="/api/users" method="POST">
+            <input type="text" name="name" placeholder="Имя" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Пароль" required>
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+    </div>
+
+    <!-- Блок вывода данных из БД -->
+    <div class="box">
+        <h3>Список товаров из БД</h3>
+        <button id="loadProducts">Загрузить товары</button>
+        <div id="productsList" style="margin-top: 15px;"></div>
+    </div>
+
+    <script>
+        document.getElementById('loadProducts').addEventListener('click', async () => {
+            const response = await fetch('/api/products');
+            const products = await response.json();
+            
+            const container = document.getElementById('productsList');
+            container.innerHTML = '';
+
+            if(products.length === 0) {
+                container.innerHTML = '<p>Товаров нет</p>';
+                return;
+            }
+
+            products.forEach(prod => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                card.innerHTML = `
+                    <strong>${prod.name}</strong> — ${prod.price} руб.<br>
+                    <small>${prod.description} (В наличии: ${prod.stock} шт.)</small>
+                `;
+                container.appendChild(card);
+            });
+        });
+    </script>
+</body>
+</html>
