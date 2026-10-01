@@ -1,38 +1,27 @@
-import express from 'express'
-import { ordersService } from '../services/ordersService.js'
-import { validateOrderBody } from '../utils/validators.js'
+import express from 'express';
+import { Order } from '../db.js';
+import { authMiddleware } from '../middleware/authMiddleware.js'; // ИМПОРТИРУЕМ
 
-const ordersRouter = express.Router()
+const router = express.Router();
 
-ordersRouter.post('/', (req, res) => {
-  const validationError = validateOrderBody(req.body)
-  if (validationError) return res.status(400).json({ error: validationError })
+// Роут создания заказа теперь защищен!
+router.post('/', authMiddleware, async (req, res) => {
+  try {
+    const { items } = req.body;
+    
+    // Сюда попадут только авторизованные. ID пользователя берем из токена:
+    const userId = req.user.id; 
 
-  const { error, data, status } = ordersService.create(req.body)
-  if (error) return res.status(status).json({ error })
-  res.status(status).json(data)
-})
+    const newOrder = await Order.create({
+      items,
+      userId,
+      status: 'created'
+    });
 
-ordersRouter.get('/', (req, res) => {
-  res.json(ordersService.getAll(req.query.userId))
-})
+    res.status(201).json(newOrder);
+  } catch (error) {
+    res.status(500).json({ message: "Ошибка создания заказа" });
+  }
+});
 
-ordersRouter.get('/:id', (req, res) => {
-  const { error, data, status } = ordersService.getById(req.params.id)
-  if (error) return res.status(status).json({ error })
-  res.json(data)
-})
-
-ordersRouter.put('/:id', (req, res) => {
-  const { error, data, status } = ordersService.update(req.params.id, req.body)
-  if (error) return res.status(status).json({ error })
-  res.json(data)
-})
-
-ordersRouter.delete('/:id', (req, res) => {
-  const { error, data, status } = ordersService.delete(req.params.id)
-  if (error) return res.status(status).json({ error })
-  res.json(data)
-})
-
-export default ordersRouter
+export default router;
